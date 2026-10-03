@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -76,6 +78,14 @@ void projectm_eval_memory_buffer_destroy(projectm_eval_mem_buffer buffer);
  * Only destroy the global buffer if no context is using it anymore.
  */
 void projectm_eval_memory_global_destroy();
+
+/**
+ * @brief Reseeds the generator behind the rand() function.
+ * The generator is shared by all contexts in the process, and is not thread-safe. Without a call,
+ * it starts from MilkDrop's fixed seed 0x4141f00d on first use.
+ * @param seed The new seed.
+ */
+void projectm_eval_set_random_seed(uint32_t seed);
 
 /**
  * @brief Creates a new execution context.

@@ -152,6 +152,31 @@ void prjm_eval_intrinsic_functions(prjm_eval_intrinsic_function_list_ptr list, u
     *list = intrinsic_function_table;
 }
 
+static uint32_t mt[N]; /* the array for the state vector  */
+static int32_t mti; /* 0 means mt[N] is not initialized */
+
+static void prjm_eval_init_genrand(uint32_t s)
+{
+    mt[0] = s & 0xffffffffUL;
+    for (mti = 1; mti < N; mti++)
+    {
+        mt[mti] =
+            (1812433253UL * (mt[mti - 1] ^ (mt[mti - 1] >> 30)) + mti);
+
+        /* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */
+        /* In the previous versions, MSBs of the seed affect   */
+        /* only MSBs of the array mt[].                        */
+        /* 2002/01/09 modified by Makoto Matsumoto             */
+        mt[mti] &= 0xffffffffUL;
+        /* for >32 bit machines */
+    }
+}
+
+void projectm_eval_set_random_seed(uint32_t seed)
+{
+    prjm_eval_init_genrand(seed);
+}
+
 /* This is Milkdrop's original rand() implementation. */
 static uint32_t prjm_eval_genrand_int32(void)
 {
@@ -159,26 +184,9 @@ static uint32_t prjm_eval_genrand_int32(void)
     static uint32_t mag01[2] = { 0x0UL, MATRIX_A };
     /* mag01[x] = x * MATRIX_A  for x=0,1 */
 
-    static uint32_t mt[N]; /* the array for the state vector  */
-    static int32_t mti; /* mti==N+1 means mt[N] is not initialized */
-
-
     if (!mti)
     {
-        uint32_t s = 0x4141f00d; // Initial Mersenne Twister seed
-        mt[0] = s & 0xffffffffUL;
-        for (mti = 1; mti < N; mti++)
-        {
-            mt[mti] =
-                (1812433253UL * (mt[mti - 1] ^ (mt[mti - 1] >> 30)) + mti);
-
-            /* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */
-            /* In the previous versions, MSBs of the seed affect   */
-            /* only MSBs of the array mt[].                        */
-            /* 2002/01/09 modified by Makoto Matsumoto             */
-            mt[mti] &= 0xffffffffUL;
-            /* for >32 bit machines */
-        }
+        prjm_eval_init_genrand(0x4141f00d); // Initial Mersenne Twister seed
     }
 
     if (mti >= N)
