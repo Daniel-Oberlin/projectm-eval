@@ -80,12 +80,23 @@ void projectm_eval_memory_buffer_destroy(projectm_eval_mem_buffer buffer);
 void projectm_eval_memory_global_destroy();
 
 /**
- * @brief Reseeds the generator behind the rand() function.
- * The generator is shared by all contexts in the process, and is not thread-safe. Without a call,
- * it starts from MilkDrop's fixed seed 0x4141f00d on first use.
+ * @brief Reseeds the rand() generator of the built-in global memory buffer, used by contexts
+ * created without a global buffer of their own.
+ * Every global buffer has its own generator; see projectm_eval_memory_buffer_set_random_seed().
+ * Without a seed, a generator starts from MilkDrop's fixed seed 0x4141f00d on first use.
  * @param seed The new seed.
  */
 void projectm_eval_set_random_seed(uint32_t seed);
+
+/**
+ * @brief Reseeds the rand() generator that belongs to a global memory buffer.
+ * rand() in a context draws from the generator of the context's global (gmegabuf) buffer, so the
+ * contexts that share a buffer share one sequence and contexts with separate buffers do not
+ * affect each other. Not thread-safe for one buffer.
+ * @param buffer The global memory buffer.
+ * @param seed The new seed.
+ */
+void projectm_eval_memory_buffer_set_random_seed(projectm_eval_mem_buffer buffer, uint32_t seed);
 
 /**
  * @brief Creates a new execution context.

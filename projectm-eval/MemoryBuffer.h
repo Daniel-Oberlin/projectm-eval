@@ -5,6 +5,8 @@
  */
 #pragma once
 
+#include <stdint.h>
+
 #include "CompilerTypes.h"
 
 /**
@@ -25,6 +27,24 @@ projectm_eval_mem_buffer prjm_eval_memory_global();
  * @return A pointer to the empty buffer.
  */
 projectm_eval_mem_buffer prjm_eval_memory_create_buffer();
+
+/**
+ * @brief State of the Mersenne Twister behind rand(). mti == 0: not seeded yet.
+ */
+typedef struct prjm_eval_random
+{
+    uint32_t mt[624];
+    int32_t mti;
+} prjm_eval_random_t;
+
+/**
+ * @brief The rand() generator that belongs to a memory buffer. Every buffer has its own, so that
+ * contexts sharing a global (gmegabuf) buffer, e.g. all code of one preset, share one sequence,
+ * and separate instances do not disturb each other.
+ * @param buffer The buffer.
+ * @return The generator's state.
+ */
+prjm_eval_random_t* prjm_eval_memory_random(projectm_eval_mem_buffer buffer);
 
 /**
  * @brief Destroys a memory buffer and any blocks stored within.

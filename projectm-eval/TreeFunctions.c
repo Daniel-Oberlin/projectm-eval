@@ -152,11 +152,10 @@ void prjm_eval_intrinsic_functions(prjm_eval_intrinsic_function_list_ptr list, u
     *list = intrinsic_function_table;
 }
 
-static uint32_t mt[N]; /* the array for the state vector  */
-static int32_t mti; /* 0 means mt[N] is not initialized */
-
-static void prjm_eval_init_genrand(uint32_t s)
+static void prjm_eval_init_genrand(prjm_eval_random_t* state, uint32_t s)
 {
+    uint32_t* mt = state->mt;
+    int32_t mti;
     mt[0] = s & 0xffffffffUL;
     for (mti = 1; mti < N; mti++)
     {
@@ -170,24 +169,32 @@ static void prjm_eval_init_genrand(uint32_t s)
         mt[mti] &= 0xffffffffUL;
         /* for >32 bit machines */
     }
+    state->mti = mti;
 }
 
 void projectm_eval_set_random_seed(uint32_t seed)
 {
-    prjm_eval_init_genrand(seed);
+    prjm_eval_init_genrand(prjm_eval_memory_random(prjm_eval_memory_global()), seed);
 }
 
-/* This is Milkdrop's original rand() implementation. */
-static uint32_t prjm_eval_genrand_int32(void)
+void projectm_eval_memory_buffer_set_random_seed(projectm_eval_mem_buffer buffer, uint32_t seed)
+{
+    prjm_eval_init_genrand(prjm_eval_memory_random(buffer), seed);
+}
+
+/* This is Milkdrop's original rand() implementation, on a given generator state. */
+static uint32_t prjm_eval_genrand_int32(prjm_eval_random_t* state)
 {
     uint32_t y;
-    static uint32_t mag01[2] = { 0x0UL, MATRIX_A };
+    static const uint32_t mag01[2] = { 0x0UL, MATRIX_A };
     /* mag01[x] = x * MATRIX_A  for x=0,1 */
+    uint32_t* mt = state->mt;
 
-    if (!mti)
+    if (!state->mti)
     {
-        prjm_eval_init_genrand(0x4141f00d); // Initial Mersenne Twister seed
+        prjm_eval_init_genrand(state, 0x4141f00d); // Initial Mersenne Twister seed
     }
+    int32_t mti = state->mti;
 
     if (mti >= N)
     { /* generate N words at one time */
@@ -210,6 +217,7 @@ static uint32_t prjm_eval_genrand_int32(void)
     }
 
     y = mt[mti++];
+    state->mti = mti;
 
     /* Tempering */
     y ^= (y >> 11);
@@ -1175,7 +1183,7 @@ prjm_eval_function_decl(rand)
         rand_max = 1.;
     }
 
-    assign_ret_val((PRJM_EVAL_F) (prjm_eval_genrand_int32() * (1.0 / (double) 0xFFFFFFFF) * rand_max));
+    assign_ret_val((PRJM_EVAL_F) (prjm_eval_genrand_int32(prjm_eval_memory_random(ctx->memory_buffer)) * (1.0 / (double) 0xFFFFFFFF) * rand_max));
 }
 
 prjm_eval_function_decl(invsqrt)

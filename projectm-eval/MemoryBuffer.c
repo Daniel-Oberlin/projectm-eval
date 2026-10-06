@@ -30,12 +30,28 @@ projectm_eval_mem_buffer prjm_eval_memory_global()
 
 projectm_eval_mem_buffer prjm_eval_memory_create_buffer()
 {
-    return calloc(PRJM_EVAL_MEM_BLOCKS, sizeof(PRJM_EVAL_F*));
+    /* One slot more than the blocks: it holds the buffer's rand() generator. */
+    projectm_eval_mem_buffer buffer = calloc(PRJM_EVAL_MEM_BLOCKS + 1, sizeof(PRJM_EVAL_F*));
+    if (buffer)
+    {
+        buffer[PRJM_EVAL_MEM_BLOCKS] = (PRJM_EVAL_F*) calloc(1, sizeof(prjm_eval_random_t));
+    }
+    return buffer;
+}
+
+prjm_eval_random_t* prjm_eval_memory_random(projectm_eval_mem_buffer buffer)
+{
+    return (prjm_eval_random_t*) buffer[PRJM_EVAL_MEM_BLOCKS];
 }
 
 void prjm_eval_memory_destroy_buffer(projectm_eval_mem_buffer buffer)
 {
+    if (!buffer)
+    {
+        return;
+    }
     prjm_eval_memory_free(buffer);
+    free(buffer[PRJM_EVAL_MEM_BLOCKS]);
 
     free(buffer);
 }

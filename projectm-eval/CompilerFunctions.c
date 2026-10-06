@@ -179,8 +179,10 @@ prjm_eval_compiler_node_t* prjm_eval_compiler_create_expression(prjm_eval_compil
         expr->memory_buffer = cctx->memory;
     }
     else if (strcmp(func->name, "_gmem") == 0 ||
-             strcmp(func->name, "gmegabuf") == 0)
+             strcmp(func->name, "gmegabuf") == 0 ||
+             strcmp(func->name, "rand") == 0)
     {
+        /* rand() draws from the generator of the global buffer, shared by the contexts using it. */
         expr->memory_buffer = cctx->global_memory;
     }
 
